@@ -1,0 +1,348 @@
+openapi: 3.0.0
+info:
+  version: "0.0.1"
+  title: Wallet Logs Service
+security:
+  - bearerAuth: []
+paths:
+  '/logs/private/v1/admin/export/transactions-log':
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Export
+      operationId: DownloadTransactionsLog
+      summary: Responds with a file with transactions log.
+      description: Available for admins with "view_system_log" permission.
+      parameters:
+        - $ref: '#/components/parameters/transationsSubjectFilter'
+        - $ref: '#/components/parameters/loggedAtFromFilter'
+        - $ref: '#/components/parameters/loggedAtToFilter'
+      responses:
+        '200':
+          description: Successful request
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '500':
+          description: Internal server error
+
+  '/logs/private/v1/admin/export/information-log':
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Export
+      operationId: DownloadInformationLog
+      summary: Responds with a file with information log.
+      description: Available for admins with "view_system_log" permission.
+      parameters:
+        - $ref: '#/components/parameters/systemSubjectFilter'
+        - $ref: '#/components/parameters/loggedAtFromFilter'
+        - $ref: '#/components/parameters/loggedAtToFilter'
+      responses:
+        '200':
+          description: Successful request
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '500':
+          description: Internal server error
+
+
+  '/logs/private/v1/admin/system-logs':
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - System logs
+      operationId: GetLogs
+      summary: Shows a list of system logs.
+      description: |
+        Available for admins with "view_system_log" permission.
+        \
+        Contains all logs that can be filtered by subject.
+      parameters:
+        - name: include
+          in: query
+          description: Used to load nested resources associated with log.
+          schema:
+            type: string
+            enum:
+              - user
+        - name: filter[subject]
+          in: query
+          description: For filtering by subject
+          schema:
+            type: string
+            enum:
+              - Manual transaction
+              - Revenue deduction
+              - Create IWT Bank Accounts
+              - Delete IWT Bank Accounts
+              - Modify IWT Bank Accounts
+              - New account
+              - New Account Type
+              - New User Profile
+              - etc.
+        - $ref: '#/components/parameters/loggedAtFromFilter'
+        - $ref: '#/components/parameters/loggedAtToFilter'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageNumber'
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LogsList'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '500':
+          description: Internal server error
+
+  '/logs/private/v1/admin/system-logs/{id}':
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - System logs
+      operationId: GetLog
+      description: Shows a single log by id.
+      parameters:
+        - name: id
+          in: path
+          description: ID of log.
+          required: true
+          schema:
+            type: integer
+            format: uint64
+        - name: include
+          in: query
+          description: Used to load nested resources associated with log.
+          schema:
+            type: string
+            enum:
+              - user
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Log'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedResponse'
+        '500':
+          description: Internal server error
+
+  '/logs/health-check':
+    get:
+      tags:
+        - Utils
+      summary: Returns 200 status with "ok" message.
+      description: Used to get currencies service status.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Successful request
+          content:
+            text/html:
+              schema:
+                type: string
+                example: ok
+
+components:
+  schemas:
+    LogList:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint64
+        loggedAt:
+          type: string
+          format: date-time
+        subject:
+          type: string
+          example: "Manual transaction"
+        user:
+          $ref: '#/components/schemas/LogUser'
+        user_id:
+          type: string
+    Log:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: uint64
+        loggedAt:
+          type: string
+          format: date-time
+        subject:
+          type: string
+          example: "Manual transaction"
+        status:
+          type: string
+          example: "Info"
+        dataTitle:
+          type: string
+          example: "Message"
+        dataFields:
+          type: object
+        user:
+          $ref: '#/components/schemas/LogUser'
+        user_id:
+          type: string
+    LogUser:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "test"
+        email:
+          type: string
+          example: "test@test.com"
+        firstName:
+          type: string
+          example: "test"
+        lastName:
+          type: string
+          example: "test"
+    LogsList:
+      type: array
+      items:
+        $ref: '#/components/schemas/LogList'
+    ForbiddenResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ForbiddenError'
+    UnauthorizedResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnauthorizedError'
+    ForbiddenError:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Forbidden
+    UnauthorizedError:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Unauthorized
+  parameters:
+    systemSubjectFilter:
+      name: filter[subject]
+      in: query
+      description: For filtering by subject
+      schema:
+        type: string
+        enum:
+          - Create IWT Bank Accounts
+          - Delete IWT Bank Accounts
+          - Modify IWT Bank Accounts
+          - New account
+          - New Account Type
+          - New User Profile
+          - etc.
+    transationsSubjectFilter:
+      name: filter[subject]
+      in: query
+      description: For filtering by subject
+      schema:
+        type: string
+        enum:
+          - Manual transaction
+          - Revenue deduction
+    loggedAtFromFilter:
+      name: filter[loggedAtFrom]
+      in: query
+      description: For filtering by logged at from date. Rule is records where date >= passed
+      schema:
+        type: string
+    loggedAtToFilter:
+      name: filter[loggedAtTo]
+      in: query
+      description: For filtering by logged at to date. Rule is records where date < passed
+      schema:
+        type: string
+    PageSize:
+      name: page[size]
+      in: query
+      description: Specifies count of objects returned in response. Default value is 20.
+      schema:
+        type: string
+    PageNumber:
+      name: page[number]
+      in: query
+      description: Specifies page number to be shown in response. size + number makes offset for records. Default value is 1.
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

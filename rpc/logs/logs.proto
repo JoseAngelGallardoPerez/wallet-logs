@@ -1,0 +1,25 @@
+syntax="proto3";
+
+package velmie.wallet.logs;
+option go_package = "logs";
+
+message CreateLogReq {
+  string subject = 1;
+  string userId = 3;
+  string logTime = 4;
+  string dataTitle = 5;
+  bytes dataFields = 6;
+}
+
+message Error {
+    string title = 1;
+    string details = 2;
+}
+
+message CreateLogResp {
+  Error error = 1;
+}
+
+service LogsService {
+  rpc CreateLog(CreateLogReq) returns(CreateLogResp);
+}
